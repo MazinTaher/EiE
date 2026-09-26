@@ -1,0 +1,14 @@
+git commit 
+git branch 
+git checkout 
+git pull
+git push
+git merge
+git rebase
+git fetch
+
+New branch and checkout: git checkout -b newBranchName commitID <— Find commit: git log --oneline
+    															   Search by message: git log --oneline --grep="xxxx"
+
+Check repo directory is connect to: remote -v 
+Add repo directory: remote add <xxxx.git> <— upstream is original repo forked, origin is forked repo
