@@ -6,7 +6,11 @@ git push
 git merge
 git rebase
 git fetch
-
+git add
+git status
+git log 
+git diff
+git push -u <remote> <branch> (First push of new local branch)
 New branch and checkout: git checkout -b newBranchName commitID <— Find commit: git log --oneline
     															   Search by message: git log --oneline --grep="xxxx"
 
