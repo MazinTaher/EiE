@@ -10,20 +10,27 @@
 #include "BTN.h"
 #include "LED.h"
 
-#define SLEEP_MS 10000
+#define SLEEP_MS 1000
 
 int main(void) {
 
    if (0 > LED_init()) {
     return 0;
   }
- 
-  LED_blink(LED0, LED_1HZ);
-  LED_blink(LED1, LED_1HZ);
-  LED_blink(LED2, LED_2HZ);
-  LED_blink(LED3, LED_1HZ);
   
+  if (0 > BTN_init()){
+    return 0;
+  }
+
+  int counter = 0;
+
   while (1) {
+
+    if(BTN_check_clear_pressed(BTN0)){
+      LED_toggle(LED0);
+      printk("Button 0 pressed: %d\n", counter);
+      counter++;
+    }
 
     k_msleep(SLEEP_MS);
 
