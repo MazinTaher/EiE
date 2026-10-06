@@ -26,13 +26,24 @@ int main(void) {
 
   while (1) {
     k_msleep(SLEEP_MS);
+    LED_toggle(LED0);
+    k_msleep(SLEEP_MS);
+    LED_toggle(LED0);
+
+    k_msleep(SLEEP_MS);
+    LED_toggle(LED1);
+    k_msleep(SLEEP_MS);
+    LED_toggle(LED1);
+
+    k_msleep(SLEEP_MS);
     LED_toggle(LED2);
     k_msleep(SLEEP_MS);
     LED_toggle(LED2);
-    LED_toggle(LED0);
-    LED_toggle(LED1);
+
+    k_msleep(SLEEP_MS);
     LED_toggle(LED3);
-   
+    k_msleep(SLEEP_MS);
+    LED_toggle(LED3);
   }
   return 0;
 }
