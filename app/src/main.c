@@ -38,13 +38,17 @@ int main(void) {
   char password[5] = "";
   char user_pass[5] = "";
   int i = 0;
-  //int j = 0;
+  int j = 0;
 
   int start_up_counter = 0;
 
   int state = STATE_LOCKED;
 
   while (1) {
+     
+    if(start_up_counter <= 3000){
+      start_up_counter += SLEEP_MS;
+    }
 
     if(state == STATE_LOCKED){
       LED_set(LED0, LED_ON);
@@ -55,7 +59,7 @@ int main(void) {
         LED_set(LED3, LED_OFF);
       }
 
-      if(BTN_check_clear_pressed(BTN3) && start_up_counter <= START_UP_MAX){
+      if(start_up_counter <= START_UP_MAX && BTN_check_clear_pressed(BTN3)){
         LED_set(LED3, LED_OFF);
         state = STATE_ENTRY;
       }
@@ -110,12 +114,28 @@ int main(void) {
 
     else if(state == STATE_ENTRY){
       LED_blink(LED3, LED_2HZ);
-      //k_msleep(SLEEP_MS);
-    }
 
-    start_up_counter += SLEEP_MS;
-    if(start_up_counter > 3000){
-      start_up_counter = 0;
+      if(BTN_check_clear_pressed(BTN0) && j < PASS_LEN){
+        password[j] = '0';
+        j++;
+        password[j] = '\0';
+        printk("Password selection: %s\n", password);
+      }
+
+      if(BTN_check_clear_pressed(BTN1) && j < PASS_LEN){
+        password[j] = '1';
+        j++;
+        password[j] = '\0';
+        printk("Password selection: %s\n", password);
+      }
+
+      if(BTN_check_clear_pressed(BTN2) && j < PASS_LEN){
+        password[j] = '2';
+        j++;
+        password[j] = '\0';
+        printk("Password selection: %s\n", password);
+      }
+      k_msleep(SLEEP_MS);
     }
   }
   return 0;
