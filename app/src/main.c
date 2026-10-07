@@ -3,6 +3,7 @@
  */
 
 #include <inttypes.h>
+#include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -10,10 +11,14 @@
 #include "BTN.h"
 #include "LED.h"
 
-#define SLEEP_MS 500
+#define SLEEP_MS 250
+
+#define PASS_LEN 4
+
+#define STATE_WAITING 0
+#define STATE_LOCKED 1
 
 int main(void) {
-
 
    if (0 > LED_init()) {
     return 0;
@@ -23,60 +28,69 @@ int main(void) {
     return 0;
   }
 
-  LED_set(LED0, LED_OFF);
+  LED_set(LED0, LED_ON);
   LED_set(LED1, LED_OFF);
   LED_set(LED2, LED_OFF);
   LED_set(LED3, LED_OFF);
 
-  int counter = 0;
+  char password[5] = "0120";
+  char user_pass[5] = "";
+  int i = 0;
+
+  int state = STATE_LOCKED;
 
   while (1) {
 
-    if(counter == 16){
-      LED_set(LED0, LED_OFF);
-      LED_set(LED1, LED_OFF);
-      LED_set(LED2, LED_OFF);
-      LED_set(LED3, LED_OFF);
-      counter = 0;
-    }
-
-
-
-    if(BTN_check_clear_pressed(BTN0)){
-      counter++;
-      printk("Button 0 pressed: %d\n", counter);
-    }
-
-    if(counter % 2 == 1){
+    if(state == STATE_LOCKED){
       LED_set(LED0, LED_ON);
+
+      if(BTN_check_clear_pressed(BTN0) && i < PASS_LEN){
+        user_pass[i] = '0';
+        i++;
+        user_pass[i] = '\0';
+        printk("Password: %s\n", user_pass);
+      }
+
+      if(BTN_check_clear_pressed(BTN1) && i < PASS_LEN){
+        user_pass[i] = '1';
+        i++;
+        user_pass[i] = '\0';
+        printk("Password: %s\n", user_pass);
+      }
+
+      if(BTN_check_clear_pressed(BTN2) && i < PASS_LEN){
+        user_pass[i] = '2';
+        i++;
+        user_pass[i] = '\0';
+        printk("Password: %s\n", user_pass);
+      }
+
+      if(BTN_check_clear_pressed(BTN3)){
+
+        if(strcmp(password, user_pass) == 0){
+          printk("Correct!\n");
+        }
+        else{
+          printk("Incorrect!\n");
+        }
+
+        LED_set(LED0, LED_OFF);
+        state = STATE_WAITING;
+      }
+      k_msleep(SLEEP_MS);
     }
-    else{
+
+    if(state == STATE_WAITING){
       LED_set(LED0, LED_OFF);
-    }
 
-    if(counter % 4 == 2 || counter % 4 == 3 ){
-       LED_set(LED1, LED_ON);
+      if(BTN_check_clear_pressed(BTN0) || BTN_check_clear_pressed(BTN1) || 
+        BTN_check_clear_pressed(BTN2) || BTN_check_clear_pressed(BTN3)){
+          state = STATE_LOCKED;
+          user_pass[0] = '\0';
+          i = 0;
+        k_msleep(SLEEP_MS);
+        }
+      } 
     }
-    else{
-      LED_set(LED1, LED_OFF);
-    }
-
-    if(counter % 8 == 4 || counter % 8 == 5 || counter % 8 == 6 || counter % 8 == 7){
-       LED_set(LED2, LED_ON);
-    }
-    else{
-      LED_set(LED2, LED_OFF);
-    }
-
-    if(counter >= 8 && counter < 16){
-      LED_set(LED3, LED_ON);
-    }
-    else{
-      LED_set(LED3, LED_OFF);
-    }
-
-    k_msleep(SLEEP_MS);
-
-  }
   return 0;
 }
