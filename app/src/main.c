@@ -12,11 +12,13 @@
 #include "LED.h"
 
 #define SLEEP_MS 250
+#define START_UP_MAX 3000
 
 #define PASS_LEN 4
 
 #define STATE_WAITING 0
 #define STATE_LOCKED 1
+#define STATE_ENTRY 2
 
 int main(void) {
 
@@ -28,14 +30,17 @@ int main(void) {
     return 0;
   }
 
-  LED_set(LED0, LED_ON);
+  LED_set(LED0, LED_OFF);
   LED_set(LED1, LED_OFF);
   LED_set(LED2, LED_OFF);
   LED_set(LED3, LED_OFF);
 
-  char password[5] = "0120";
+  char password[5] = "";
   char user_pass[5] = "";
   int i = 0;
+  //int j = 0;
+
+  int start_up_counter = 0;
 
   int state = STATE_LOCKED;
 
@@ -43,6 +48,17 @@ int main(void) {
 
     if(state == STATE_LOCKED){
       LED_set(LED0, LED_ON);
+      if(start_up_counter <= START_UP_MAX){
+        LED_set(LED3, LED_ON);
+      }
+      else{
+        LED_set(LED3, LED_OFF);
+      }
+
+      if(BTN_check_clear_pressed(BTN3) && start_up_counter <= START_UP_MAX){
+        LED_set(LED3, LED_OFF);
+        state = STATE_ENTRY;
+      }
 
       if(BTN_check_clear_pressed(BTN0) && i < PASS_LEN){
         user_pass[i] = '0';
@@ -80,7 +96,7 @@ int main(void) {
       k_msleep(SLEEP_MS);
     }
 
-    if(state == STATE_WAITING){
+    else if(state == STATE_WAITING){
       LED_set(LED0, LED_OFF);
 
       if(BTN_check_clear_pressed(BTN0) || BTN_check_clear_pressed(BTN1) || 
@@ -90,7 +106,17 @@ int main(void) {
           i = 0;
         k_msleep(SLEEP_MS);
         }
-      } 
+      }
+
+    else if(state == STATE_ENTRY){
+      LED_blink(LED3, LED_2HZ);
+      //k_msleep(SLEEP_MS);
     }
+
+    start_up_counter += SLEEP_MS;
+    if(start_up_counter > 3000){
+      start_up_counter = 0;
+    }
+  }
   return 0;
 }
