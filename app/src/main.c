@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -37,6 +38,8 @@ int main(void) {
 
   char password[5] = "";
   char user_pass[5] = "";
+  char start_key[5] = "0120";
+  bool new_pass = 0;
   int i = 0;
   int j = 0;
 
@@ -60,7 +63,6 @@ int main(void) {
       }
 
       if(start_up_counter <= START_UP_MAX && BTN_check_clear_pressed(BTN3)){
-        LED_set(LED3, LED_OFF);
         state = STATE_ENTRY;
       }
 
@@ -87,7 +89,10 @@ int main(void) {
 
       if(BTN_check_clear_pressed(BTN3)){
 
-        if(strcmp(password, user_pass) == 0){
+        if(!new_pass && strcmp(user_pass, start_key) == 0){
+          printk("Correct!\n");
+        }
+        else if(new_pass && strcmp(password, user_pass) == 0){
           printk("Correct!\n");
         }
         else{
@@ -114,6 +119,7 @@ int main(void) {
 
     else if(state == STATE_ENTRY){
       LED_blink(LED3, LED_2HZ);
+      start_up_counter = 3001;
 
       if(BTN_check_clear_pressed(BTN0) && j < PASS_LEN){
         password[j] = '0';
@@ -134,6 +140,12 @@ int main(void) {
         j++;
         password[j] = '\0';
         printk("Password selection: %s\n", password);
+      }
+
+      if(BTN_check_clear_pressed(BTN3)){
+        LED_set(LED3, LED_OFF);
+        new_pass = 1;
+        state = STATE_LOCKED;
       }
       k_msleep(SLEEP_MS);
     }
