@@ -1,0 +1,4 @@
+west:
+  command: /Users/user/zephyr-projects/eie_nrf52840/.venv/bin/west build -p always
+  topdir: /Users/user/zephyr-projects
+  version: 1.5.0
