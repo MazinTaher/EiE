@@ -7,84 +7,29 @@
 #include "LED.h"
 #include "my_state_machine.h"
 
-/*--------------------------------------------------------------------
-* Function Prototypes
-*------------------------------------------------------------------*/
-static void led_on_state_entry(void* o);
-static enum smf_state_result led_on_state_run(void* o);
-static void led_off_state_entry(void* o);
-static enum smf_state_result led_off_state_run(void* o);
-
-/*--------------------------------------------------------------------
-* Typedefs
-*------------------------------------------------------------------*/
-enum led_state_machine_states {
-    LED_ON_STATE,
-    LED_OFF_STATE
+enum vending_states{
+    WAITING,
+    DISPENSING
 };
 
-typedef struct {
-    // Context variable used by zephyr to track state machine state. Must be first
+typedef struct{
     struct smf_ctx ctx;
 
-    uint16_t count;
-} led_state_object_t;
+} vending_object_t;
 
+static vending_object_t vending_machine;
 
-/*--------------------------------------------------------------------
-* Local Variables
-*------------------------------------------------------------------*/
-static const struct smf_state led_states[] = {
-    [LED_ON_STATE] = SMF_CREATE_STATE(
-        led_on_state_entry, 
-        led_on_state_run, 
-        NULL, NULL, NULL
-    ),
+static void waiting_entry(void* o);
+static void dispensing_entry(void* o);
 
-    [LED_OFF_STATE] = SMF_CREATE_STATE(
-        led_off_state_entry,
-        led_off_state_run,
-        NULL, NULL, NULL
-    )
+static enum smf_state_result waiting_run_state(void* o);
+static enum smf_state_result dispensing_run_state(void* o);
+
+static const struct smf_state vending_states_table[] = {
+    [WAITING] = SMF_CREATE_STATE(waiting_entry, waiting_run_state, NULL, NULL, NULL),
+    [DISPENSING] = SMF_CREATE_STATE(dispensing_entry, dispensing_run_state, NULL, NULL, NULL)
 };
 
-static led_state_object_t led_state_object;
+void state_machine_init(){}
 
-static void led_on_state_entry(void* o) {
-    LED_set(LED0, LED_ON);
-}
-
-static enum smf_state_result led_on_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_OFF_STATE]);
-    } else {
-        led_state_object.count++;
-    }
-
-    return SMF_EVENT_HANDLED;
-}
-
-static void led_off_state_entry(void* o) {
-    LED_set(LED0, LED_OFF);
-}
-
-static enum smf_state_result led_off_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-    } else {
-        led_state_object.count++;
-    }
-
-    return SMF_EVENT_HANDLED;
-}
-
-void state_machine_init() {
-    led_state_object.count = 0;
-    smf_set_initial(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-}
-
-int state_machine_run() {
-    return smf_run_state(SMF_CTX(&led_state_object));
-}
+int state_machine_run(){}
