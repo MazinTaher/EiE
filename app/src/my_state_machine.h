@@ -3,6 +3,6 @@
 
 void state_machine_init();
 
-void state_machine_run();
+int state_machine_run();
 
 #endif 
