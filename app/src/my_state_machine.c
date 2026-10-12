@@ -99,16 +99,26 @@ static state_object_t sX_state_object;
  * S0 state
  *------------------------------------------------------------------*/
 static void s0_state_entry(void* o){
-    printk("Entered state s0");
+    printk("Entered state s0\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_OFF);
+
+    BTN_check_clear_pressed(BTN0);
+    BTN_check_clear_pressed(BTN1);
+    BTN_check_clear_pressed(BTN2);
+    BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s0_state_run(void* o);
+static enum smf_state_result s0_state_run(void* o){
+    if(BTN_check_clear_pressed(BTN0)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S1]);
+    }
+    return SMF_EVENT_HANDLED;
+}
 
 static void s0_state_exit(void* o){
-    printk("Exiting state s0");
+    printk("Exiting state s0\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -119,11 +129,31 @@ static void s0_state_exit(void* o){
  * S1 state
  *------------------------------------------------------------------*/
 static void s1_state_entry(void* o){
-    printk("Entered state s1");
+    printk("Entered state s1\n");
+    LED_blink(LED0, LED_4HZ);
+
+    BTN_check_clear_pressed(BTN0);
+    BTN_check_clear_pressed(BTN1);
+    BTN_check_clear_pressed(BTN2);
+    BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s1_state_run(void* o);
+static enum smf_state_result s1_state_run(void* o){
+    if(BTN_check_clear_pressed(BTN1)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
+    }
+
+    else if(BTN_check_clear_pressed(BTN2)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S4]);
+    }
+
+    else if(BTN_check_clear_pressed(BTN3)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    }
+    return SMF_EVENT_HANDLED;
+}
+
 static void s1_state_exit(void* o){
-    printk("Exiting state s1");
+    printk("Exiting state s1\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -134,15 +164,33 @@ static void s1_state_exit(void* o){
  * S2 state
  *------------------------------------------------------------------*/
 static void s2_state_entry(void* o){
-    printk("Entered state s2");
+    sX_state_object.count = 0;
+    printk("Entered state s2\n");
     LED_set(LED0, LED_ON);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_ON);
     LED_set(LED3, LED_OFF);
+
+    BTN_check_clear_pressed(BTN0);
+    BTN_check_clear_pressed(BTN1);
+    BTN_check_clear_pressed(BTN2);
+    BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s2_state_run(void* o);
+static enum smf_state_result s2_state_run(void* o){
+    sX_state_object.count++;
+
+    if(BTN_check_clear_pressed(BTN3)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    }
+
+    else if(sX_state_object.count > 1000){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S3]);
+    }
+
+    return SMF_EVENT_HANDLED;
+}
 static void s2_state_exit(void* o){
-    printk("Exiting state s2");
+    printk("Exiting state s2\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -153,15 +201,33 @@ static void s2_state_exit(void* o){
  * S3 state
  *------------------------------------------------------------------*/
 static void s3_state_entry(void* o){
-    printk("Entered state s3");
+    sX_state_object.count = 0;
+    printk("Entered state s3\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_ON);
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_ON);
+
+    BTN_check_clear_pressed(BTN0);
+    BTN_check_clear_pressed(BTN1);
+    BTN_check_clear_pressed(BTN2);
+    BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s3_state_run(void* o);
+static enum smf_state_result s3_state_run(void* o){
+    sX_state_object.count++;
+
+    if(BTN_check_clear_pressed(BTN3)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    }
+
+    else if(sX_state_object.count > 2000){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
+    }
+
+    return SMF_EVENT_HANDLED;
+}
 static void s3_state_exit(void* o){
-    printk("Exiting state s3");
+    printk("Exiting state s3\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -172,17 +238,30 @@ static void s3_state_exit(void* o){
  * S4 state
  *------------------------------------------------------------------*/
 static void s4_state_entry(void* o){
-    printk("Entered state s4");
+    printk("Entered state s4\n");
+    LED_blink(LED0, LED_16HZ);
+    LED_blink(LED1, LED_16HZ);
+    LED_blink(LED2, LED_16HZ);
+    LED_blink(LED3, LED_16HZ);
+
+    BTN_check_clear_pressed(BTN0);
+    BTN_check_clear_pressed(BTN1);
+    BTN_check_clear_pressed(BTN2);
+    BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s4_state_run(void* o);
+static enum smf_state_result s4_state_run(void* o){
+    if(BTN_check_clear_pressed(BTN3)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    }
+    return SMF_EVENT_HANDLED;
+}
 static void s4_state_exit(void* o){
-    printk("Exiting state s4");
+    printk("Exiting state s4\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_OFF);
 }
-
 
 /*--------------------------------------------------------------------
 Public functions
