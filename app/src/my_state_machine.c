@@ -12,6 +12,9 @@
 #include "BTN.h"
 #include "my_state_machine.h"
 
+#include <stdbool.h>
+#include <string.h>
+
 /*--------------------------------------------------------------------
 * Function Prototypes
 *------------------------------------------------------------------*/
@@ -51,6 +54,7 @@ typedef struct {
 char password[5] = "";
 char user_password[5] = "";
 char default_password[5] = "0120";
+bool new_password = false;
 int i = 0;
 
 /*--------------------------------------------------------------------
@@ -77,6 +81,7 @@ static const struct smf_state password_states_table[] = {
         pEntry_state_exit, 
         NULL, NULL
     ),
+    
 };
 
 static password_object_t password_object;
@@ -123,7 +128,20 @@ static enum smf_state_result locked_state_run(void* o){
         user_password[i] = '\0';
     }
     else if(BTN_check_clear_pressed(BTN3)){
-       
+       if(!new_password && strcmp(user_password,default_password) == 0){
+        printk("Correct!");
+       }
+       else{
+        printk("Incorrect!");
+       }
+
+       if(new_password && strcmp(user_password, password)){
+        printk("Correct!");
+       }
+       else{
+        printk("Incorrect!");
+       }
+       smf_set_state(SMF_CTX(&password_object), &password_states_table[WAITING]);
     }
     return SMF_EVENT_HANDLED;
 }
@@ -135,13 +153,17 @@ static void locked_state_exit(void* o){
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_OFF);
 }
-
+ 
 /*--------------------------------------------------------------------
  * WAITING state
  *------------------------------------------------------------------*/
+
 static void waiting_state_entry(void* o){
     printk("Entered state WAITING\n");
-    LED_blink(LED0, LED_4HZ);
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
 
     BTN_check_clear_pressed(BTN0);
     BTN_check_clear_pressed(BTN1);
@@ -149,16 +171,12 @@ static void waiting_state_entry(void* o){
     BTN_check_clear_pressed(BTN3);
 }
 static enum smf_state_result waiting_state_run(void* o){
-    if(BTN_check_clear_pressed(BTN1)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
-    }
-
-    else if(BTN_check_clear_pressed(BTN2)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S4]);
-    }
-
-    else if(BTN_check_clear_pressed(BTN3)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    user_password[0] = '\0';
+    if(BTN_check_clear_pressed(BTN0) ||
+       BTN_check_clear_pressed(BTN0) ||
+       BTN_check_clear_pressed(BTN0) ||
+       BTN_check_clear_pressed(BTN0)) {
+       smf_set_state(SMF_CTX(&password_object), &password_states_table[LOCKED]);
     }
     return SMF_EVENT_HANDLED;
 }
@@ -174,9 +192,10 @@ static void waiting_state_exit(void* o){
 /*--------------------------------------------------------------------
  * ENTRY state
  *------------------------------------------------------------------*/
+
 static void pEntry_state_entry(void* o){
     printk("Entered state ENTRY\n");
-    LED_blink(LED0, LED_4HZ);
+    LED_blink(LED3, LED_4HZ);
 
     BTN_check_clear_pressed(BTN0);
     BTN_check_clear_pressed(BTN1);
@@ -184,17 +203,6 @@ static void pEntry_state_entry(void* o){
     BTN_check_clear_pressed(BTN3);
 }
 static enum smf_state_result pEntry_state_run(void* o){
-    if(BTN_check_clear_pressed(BTN1)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
-    }
-
-    else if(BTN_check_clear_pressed(BTN2)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S4]);
-    }
-
-    else if(BTN_check_clear_pressed(BTN3)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
-    }
     return SMF_EVENT_HANDLED;
 }
 
@@ -205,7 +213,6 @@ static void pEntry_state_exit(void* o){
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_OFF);
 }
-
 
 /*--------------------------------------------------------------------
 Public functions
