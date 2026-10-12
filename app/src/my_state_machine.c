@@ -15,110 +15,121 @@
 /*--------------------------------------------------------------------
 * Function Prototypes
 *------------------------------------------------------------------*/
-static void s0_state_entry(void* o);
-static enum smf_state_result s0_state_run(void* o);
-static void s0_state_exit(void* o);
+static void locked_state_entry(void* o);
+static enum smf_state_result locked_state_run(void* o);
+static void locked_state_exit(void* o);
 
-static void s1_state_entry(void* o);
-static enum smf_state_result s1_state_run(void* o);
-static void s1_state_exit(void* o);
+static void pEntry_state_entry(void* o);
+static enum smf_state_result pEntry_state_run(void* o);
+static void pEntry_state_exit(void* o);
 
-static void s2_state_entry(void* o);
-static enum smf_state_result s2_state_run(void* o);
-static void s2_state_exit(void* o);
-
-static void s3_state_entry(void* o);
-static enum smf_state_result s3_state_run(void* o);
-static void s3_state_exit(void* o);
-
-static void s4_state_entry(void* o);
-static enum smf_state_result s4_state_run(void* o);
-static void s4_state_exit(void* o);
+static void waiting_state_entry(void* o);
+static enum smf_state_result waiting_state_run(void* o);
+static void waiting_state_exit(void* o);
 
 /*--------------------------------------------------------------------
 * Typedefs
 *------------------------------------------------------------------*/
 enum sX_states {
-    S0,
-    S1,
-    S2,
-    S3,
-    S4
+    LOCKED,
+    WAITING,
+    ENTRY
 };
 
 typedef struct {
-    // Context variable used by zephyr to track state machine state. Must be first
     struct smf_ctx ctx;
 
     uint16_t count;
-} state_object_t;
+} password_object_t;
+
+
+/*--------------------------------------------------------------------
+* Variables / Alias's
+*------------------------------------------------------------------*/
+#define PASSWORD_LEN 4
+#define THREE_SECOND_COUNT 3000
+char password[5] = "";
+char user_password[5] = "";
+char default_password[5] = "0120";
+int i = 0;
 
 /*--------------------------------------------------------------------
  * State table
  *------------------------------------------------------------------*/
-static const struct smf_state sX_states_table[] = {
-    [S0] = SMF_CREATE_STATE(
-        s0_state_entry, 
-        s0_state_run, 
-        s0_state_exit, 
+static const struct smf_state password_states_table[] = {
+    [LOCKED] = SMF_CREATE_STATE(
+        locked_state_entry, 
+        locked_state_run, 
+        locked_state_exit, 
         NULL, NULL
     ),
 
-   [S1] = SMF_CREATE_STATE(
-        s1_state_entry, 
-        s1_state_run, 
-        s1_state_exit,
+   [WAITING] = SMF_CREATE_STATE(
+        waiting_state_entry, 
+        waiting_state_run, 
+        waiting_state_exit,
         NULL, NULL
     ),
 
-    [S2] = SMF_CREATE_STATE(
-        s2_state_entry, 
-        s2_state_run, 
-        s2_state_exit, 
-        NULL, NULL
-    ),
-
-    [S3] = SMF_CREATE_STATE(
-        s3_state_entry, 
-        s3_state_run, 
-        s3_state_exit, 
-        NULL, NULL
-    ),
-
-    [S4] = SMF_CREATE_STATE(
-        s4_state_entry, 
-        s4_state_run, 
-        s4_state_exit, 
+    [ENTRY] = SMF_CREATE_STATE(
+        pEntry_state_entry, 
+        pEntry_state_run, 
+        pEntry_state_exit, 
         NULL, NULL
     ),
 };
 
-static state_object_t sX_state_object;
+static password_object_t password_object;
 
 /*--------------------------------------------------------------------
- * S0 state
+ * LOCKED state
  *------------------------------------------------------------------*/
-static void s0_state_entry(void* o){
-    printk("Entered state s0\n");
-    LED_set(LED0, LED_OFF);
+static void locked_state_entry(void* o){
+    printk("Entered state LOCKED\n");
+    LED_set(LED0, LED_ON);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
-    LED_set(LED3, LED_OFF);
+    LED_set(LED3, LED_ON);
 
     BTN_check_clear_pressed(BTN0);
     BTN_check_clear_pressed(BTN1);
     BTN_check_clear_pressed(BTN2);
     BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s0_state_run(void* o){
-    if(BTN_check_clear_pressed(BTN0)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S1]);
+static enum smf_state_result locked_state_run(void* o){
+
+    if(password_object.count < THREE_SECOND_COUNT){
+        password_object.count++;
+    }
+    else if(password_object.count <= THREE_SECOND_COUNT && BTN_check_clear_pressed(BTN3)){
+        smf_set_state(SMF_CTX(&password_object), &password_states_table[ENTRY]);
+    }
+    else{
+        LED_set(LED3, LED_OFF);
+    }
+    if(BTN_check_clear_pressed(BTN0) && i < PASSWORD_LEN){
+        user_password[i] = '0';
+        i++;
+        user_password[i] = '\0';
+    }
+    else if(BTN_check_clear_pressed(BTN1) && i < PASSWORD_LEN){
+        user_password[i] = '1';
+        i++;
+        user_password[i] = '\0';
+    }
+    else if(BTN_check_clear_pressed(BTN2) && i < PASSWORD_LEN){
+        user_password[i] = '2';
+        i++;
+        user_password[i] = '\0';
+    }
+    else if(BTN_check_clear_pressed(BTN3)){
+       
     }
     return SMF_EVENT_HANDLED;
 }
 
-static void s0_state_exit(void* o){
-    printk("Exiting state s0\n");
+static void locked_state_exit(void* o){
+    printk("Exiting state LOCKED\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -126,10 +137,10 @@ static void s0_state_exit(void* o){
 }
 
 /*--------------------------------------------------------------------
- * S1 state
+ * WAITING state
  *------------------------------------------------------------------*/
-static void s1_state_entry(void* o){
-    printk("Entered state s1\n");
+static void waiting_state_entry(void* o){
+    printk("Entered state WAITING\n");
     LED_blink(LED0, LED_4HZ);
 
     BTN_check_clear_pressed(BTN0);
@@ -137,7 +148,7 @@ static void s1_state_entry(void* o){
     BTN_check_clear_pressed(BTN2);
     BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s1_state_run(void* o){
+static enum smf_state_result waiting_state_run(void* o){
     if(BTN_check_clear_pressed(BTN1)){
         smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
     }
@@ -152,8 +163,8 @@ static enum smf_state_result s1_state_run(void* o){
     return SMF_EVENT_HANDLED;
 }
 
-static void s1_state_exit(void* o){
-    printk("Exiting state s1\n");
+static void waiting_state_exit(void* o){
+    printk("Exiting state WAITING\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
@@ -161,116 +172,49 @@ static void s1_state_exit(void* o){
 }
 
 /*--------------------------------------------------------------------
- * S2 state
+ * ENTRY state
  *------------------------------------------------------------------*/
-static void s2_state_entry(void* o){
-    sX_state_object.count = 0;
-    printk("Entered state s2\n");
-    LED_set(LED0, LED_ON);
-    LED_set(LED1, LED_OFF);
-    LED_set(LED2, LED_ON);
-    LED_set(LED3, LED_OFF);
+static void pEntry_state_entry(void* o){
+    printk("Entered state ENTRY\n");
+    LED_blink(LED0, LED_4HZ);
 
     BTN_check_clear_pressed(BTN0);
     BTN_check_clear_pressed(BTN1);
     BTN_check_clear_pressed(BTN2);
     BTN_check_clear_pressed(BTN3);
 }
-static enum smf_state_result s2_state_run(void* o){
-    sX_state_object.count++;
-
-    if(BTN_check_clear_pressed(BTN3)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
-    }
-
-    else if(sX_state_object.count > 1000){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S3]);
-    }
-
-    return SMF_EVENT_HANDLED;
-}
-static void s2_state_exit(void* o){
-    printk("Exiting state s2\n");
-    LED_set(LED0, LED_OFF);
-    LED_set(LED1, LED_OFF);
-    LED_set(LED2, LED_OFF);
-    LED_set(LED3, LED_OFF);
-}
-
-/*--------------------------------------------------------------------
- * S3 state
- *------------------------------------------------------------------*/
-static void s3_state_entry(void* o){
-    sX_state_object.count = 0;
-    printk("Entered state s3\n");
-    LED_set(LED0, LED_OFF);
-    LED_set(LED1, LED_ON);
-    LED_set(LED2, LED_OFF);
-    LED_set(LED3, LED_ON);
-
-    BTN_check_clear_pressed(BTN0);
-    BTN_check_clear_pressed(BTN1);
-    BTN_check_clear_pressed(BTN2);
-    BTN_check_clear_pressed(BTN3);
-}
-static enum smf_state_result s3_state_run(void* o){
-    sX_state_object.count++;
-
-    if(BTN_check_clear_pressed(BTN3)){
-        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
-    }
-
-    else if(sX_state_object.count > 2000){
+static enum smf_state_result pEntry_state_run(void* o){
+    if(BTN_check_clear_pressed(BTN1)){
         smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S2]);
     }
 
-    return SMF_EVENT_HANDLED;
-}
-static void s3_state_exit(void* o){
-    printk("Exiting state s3\n");
-    LED_set(LED0, LED_OFF);
-    LED_set(LED1, LED_OFF);
-    LED_set(LED2, LED_OFF);
-    LED_set(LED3, LED_OFF);
-}
+    else if(BTN_check_clear_pressed(BTN2)){
+        smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S4]);
+    }
 
-/*--------------------------------------------------------------------
- * S4 state
- *------------------------------------------------------------------*/
-static void s4_state_entry(void* o){
-    printk("Entered state s4\n");
-    LED_blink(LED0, LED_16HZ);
-    LED_blink(LED1, LED_16HZ);
-    LED_blink(LED2, LED_16HZ);
-    LED_blink(LED3, LED_16HZ);
-
-    BTN_check_clear_pressed(BTN0);
-    BTN_check_clear_pressed(BTN1);
-    BTN_check_clear_pressed(BTN2);
-    BTN_check_clear_pressed(BTN3);
-}
-static enum smf_state_result s4_state_run(void* o){
-    if(BTN_check_clear_pressed(BTN3)){
+    else if(BTN_check_clear_pressed(BTN3)){
         smf_set_state(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
     }
     return SMF_EVENT_HANDLED;
 }
-static void s4_state_exit(void* o){
-    printk("Exiting state s4\n");
+
+static void pEntry_state_exit(void* o){
+    printk("Exiting state ENTRY\n");
     LED_set(LED0, LED_OFF);
     LED_set(LED1, LED_OFF);
     LED_set(LED2, LED_OFF);
     LED_set(LED3, LED_OFF);
 }
+
 
 /*--------------------------------------------------------------------
 Public functions
 *------------------------------------------------------------------*/
 void state_machine_init() {
-    sX_state_object.count = 0;
-    smf_set_initial(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
+    password_object.count = 0;
+    smf_set_initial(SMF_CTX(&password_object), &password_states_table[LOCKED]);
 }
 
 int state_machine_run() {
-    return smf_run_state(SMF_CTX(&sX_state_object));
+    return smf_run_state(SMF_CTX(&password_object));
 }
