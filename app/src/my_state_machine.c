@@ -3,24 +3,47 @@
  */
 
 #include <zephyr/smf.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/printk.h>
 
 #include "LED.h"
+#include "BTN.h"
 #include "my_state_machine.h"
 
 /*--------------------------------------------------------------------
 * Function Prototypes
 *------------------------------------------------------------------*/
-static void led_on_state_exit(void* o);
-static enum smf_state_result led_on_state_run(void* o);
-static void led_off_state_exit(void* o);
-static enum smf_state_result led_off_state_run(void* o);
+static void s0_state_entry(void* o);
+static enum smf_state_result s0_state_run(void* o);
+static void s0_state_exit(void* o);
+
+static void s1_state_entry(void* o);
+static enum smf_state_result s1_state_run(void* o);
+static void s1_state_exit(void* o);
+
+static void s2_state_entry(void* o);
+static enum smf_state_result s2_state_run(void* o);
+static void s2_state_exit(void* o);
+
+static void s3_state_entry(void* o);
+static enum smf_state_result s3_state_run(void* o);
+static void s3_state_exit(void* o);
+
+static void s4_state_entry(void* o);
+static enum smf_state_result s4_state_run(void* o);
+static void s4_state_exit(void* o);
 
 /*--------------------------------------------------------------------
 * Typedefs
 *------------------------------------------------------------------*/
-enum led_state_machine_states {
-    LED_ON_STATE,
-    LED_OFF_STATE
+enum sX_states {
+    S0,
+    S1,
+    S2,
+    S3,
+    S4
 };
 
 typedef struct {
@@ -28,63 +51,147 @@ typedef struct {
     struct smf_ctx ctx;
 
     uint16_t count;
-} led_state_object_t;
+} state_object_t;
+
+/*--------------------------------------------------------------------
+ * State table
+ *------------------------------------------------------------------*/
+static const struct smf_state sX_states_table[] = {
+    [S0] = SMF_CREATE_STATE(
+        s0_state_entry, 
+        s0_state_run, 
+        s0_state_exit, 
+        NULL, NULL
+    ),
+
+   [S1] = SMF_CREATE_STATE(
+        s1_state_entry, 
+        s1_state_run, 
+        s1_state_exit,
+        NULL, NULL
+    ),
+
+    [S2] = SMF_CREATE_STATE(
+        s2_state_entry, 
+        s2_state_run, 
+        s2_state_exit, 
+        NULL, NULL
+    ),
+
+    [S3] = SMF_CREATE_STATE(
+        s3_state_entry, 
+        s3_state_run, 
+        s3_state_exit, 
+        NULL, NULL
+    ),
+
+    [S4] = SMF_CREATE_STATE(
+        s4_state_entry, 
+        s4_state_run, 
+        s4_state_exit, 
+        NULL, NULL
+    ),
+};
+
+static state_object_t sX_state_object;
+
+/*--------------------------------------------------------------------
+ * S0 state
+ *------------------------------------------------------------------*/
+static void s0_state_entry(void* o){
+    printk("Entered state s0");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
+static enum smf_state_result s0_state_run(void* o);
+
+static void s0_state_exit(void* o){
+    printk("Exiting state s0");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
+
+/*--------------------------------------------------------------------
+ * S1 state
+ *------------------------------------------------------------------*/
+static void s1_state_entry(void* o){
+    printk("Entered state s1");
+}
+static enum smf_state_result s1_state_run(void* o);
+static void s1_state_exit(void* o){
+    printk("Exiting state s1");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
+
+/*--------------------------------------------------------------------
+ * S2 state
+ *------------------------------------------------------------------*/
+static void s2_state_entry(void* o){
+    printk("Entered state s2");
+    LED_set(LED0, LED_ON);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_ON);
+    LED_set(LED3, LED_OFF);
+}
+static enum smf_state_result s2_state_run(void* o);
+static void s2_state_exit(void* o){
+    printk("Exiting state s2");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
+
+/*--------------------------------------------------------------------
+ * S3 state
+ *------------------------------------------------------------------*/
+static void s3_state_entry(void* o){
+    printk("Entered state s3");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_ON);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_ON);
+}
+static enum smf_state_result s3_state_run(void* o);
+static void s3_state_exit(void* o){
+    printk("Exiting state s3");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
+
+/*--------------------------------------------------------------------
+ * S4 state
+ *------------------------------------------------------------------*/
+static void s4_state_entry(void* o){
+    printk("Entered state s4");
+}
+static enum smf_state_result s4_state_run(void* o);
+static void s4_state_exit(void* o){
+    printk("Exiting state s4");
+    LED_set(LED0, LED_OFF);
+    LED_set(LED1, LED_OFF);
+    LED_set(LED2, LED_OFF);
+    LED_set(LED3, LED_OFF);
+}
 
 
 /*--------------------------------------------------------------------
-* Local Variables
+Public functions
 *------------------------------------------------------------------*/
-static const struct smf_state led_states[] = {
-    [LED_ON_STATE] = SMF_CREATE_STATE(
-        NULL, 
-        led_on_state_run, 
-        led_on_state_exit, NULL, NULL
-    ),
-
-    [LED_OFF_STATE] = SMF_CREATE_STATE(
-        NULL,
-        led_off_state_run,
-        led_off_state_exit, NULL, NULL
-    )
-};
-
-static led_state_object_t led_state_object;
-
-static void led_on_state_exit(void* o) {
-    LED_set(LED0, LED_ON);
-}
-
-static enum smf_state_result led_on_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_OFF_STATE]);
-    } else {
-        led_state_object.count++;
-    }
-
-    return SMF_EVENT_HANDLED;
-}
-
-static void led_off_state_exit(void* o) {
-    LED_set(LED0, LED_OFF);
-}
-
-static enum smf_state_result led_off_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-    } else {
-        led_state_object.count++;
-    }
-
-    return SMF_EVENT_HANDLED;
-}
-
 void state_machine_init() {
-    led_state_object.count = 0;
-    smf_set_initial(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
+    sX_state_object.count = 0;
+    smf_set_initial(SMF_CTX(&sX_state_object), &sX_states_table[S0]);
 }
 
 int state_machine_run() {
-    return smf_run_state(SMF_CTX(&led_state_object));
+    return smf_run_state(SMF_CTX(&sX_state_object));
 }
